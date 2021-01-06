@@ -176,19 +176,17 @@ namespace AlternateDimensions
 	}
 }
 
-//Main.maxTilesX = 16800;
-//   Main.tile = new Tile[Main.maxTilesX + 1, Main.maxTilesY + 1];
-//Main.Map = new Terraria.Map.WorldMap(Main.maxTilesX, Main.maxTilesY);
+//  Main.maxTilesX = 16800;
+//  Main.tile = new Tile[Main.maxTilesX + 1, Main.maxTilesY + 1];
+//  Main.Map = new Terraria.Map.WorldMap(Main.maxTilesX, Main.maxTilesY);
 //	Main.leftWorld = 0f;
 //	Main.rightWorld = Main.maxTilesX * 16;
 //	Main.topWorld = 0f;
 //	Main.bottomWorld = Main.maxTilesY * 16;
 //	Main.maxTilesX = (int)Main.rightWorld / 16 + 1;
-//Main.maxTilesY = (int)Main.bottomWorld / 16 + 1;
+//  Main.maxTilesY = (int)Main.bottomWorld / 16 + 1;
 //	Main.maxSectionsX = Main.maxTilesX / 200;
 //	Main.maxSectionsY = Main.maxTilesY / 150;
-
-
 
 //public override bool HijackGetData(ref byte messageType, ref BinaryReader reader, int playerNumber)
 //{

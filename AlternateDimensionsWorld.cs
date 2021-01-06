@@ -9,6 +9,7 @@ using Terraria.GameContent.Generation;
 using System;
 using System.Linq;
 using Terraria.ModLoader.IO;
+using log4net;
 
 namespace AlternateDimensions
 {
@@ -57,7 +58,7 @@ namespace AlternateDimensions
 
 			if (Main.netMode == 1) // if MP client...
 			{
-				Dimension vanilla = existsInWorldDimensions.FirstOrDefault(x => x.modname == "vanilla");
+				Dimension vanilla = existsInWorldDimensions.Find(x => x.modname == "vanilla");
 				if (vanilla != null)
 				{
 					SetSection(vanilla); // TODO, called before or after setworldsize?
@@ -90,7 +91,7 @@ namespace AlternateDimensions
 			TagCompound tag = new TagCompound
 			{
 				["saveVersion"] = saveVersion,
-				["Dimensions"] = existsInWorldDimensions.Select(Dimension.Save).ToList(),
+				["Dimensions"] = existsInWorldDimensions.ConvertAll(Dimension.Save),
 			};
 			DebugText($"Wrote out {existsInWorldDimensions.Count} sections");
 			return tag;
@@ -102,7 +103,7 @@ namespace AlternateDimensions
 			int version = tag.GetInt("saveVersion");
 			existsInWorldDimensions = new List<Dimension>(tag.GetList<TagCompound>("Dimensions").Select(Dimension.Load));
 
-			Dimension vanilla = existsInWorldDimensions.FirstOrDefault(x => x.modname == "vanilla");
+			Dimension vanilla = existsInWorldDimensions.Find(x => x.modname == "vanilla");
 			if (vanilla != null)
 			{
 				if (!Main.dedServ)
@@ -194,7 +195,7 @@ namespace AlternateDimensions
 		// HOOKS Section
 		internal void DimensionSwap(string modname, string areaname)
 		{
-			Dimension current = existsInWorldDimensions.FirstOrDefault(x => x.modname == modname && x.areaname == areaname);
+			Dimension current = existsInWorldDimensions.Find(x => x.modname == modname && x.areaname == areaname);
 			if (current != null)
 			{
 				SetSection(current);
@@ -212,7 +213,7 @@ namespace AlternateDimensions
 
 		internal Rectangle DimensionRectangle(string modname, string areaname)
 		{
-			Dimension current = existsInWorldDimensions.FirstOrDefault(x => x.modname == modname && x.areaname == areaname);
+			Dimension current = existsInWorldDimensions.Find(x => x.modname == modname && x.areaname == areaname);
 			if (current != null)
 			{
 				DebugText(Main.dedServ + " DimRec cur: " + current);
@@ -227,12 +228,8 @@ namespace AlternateDimensions
 
 		internal bool DimensionGenerated(string modname, string areaname)
 		{
-			if (existsInWorldDimensions.Any(x => x.modname == modname && x.areaname == areaname))
-			{
-				return true;
-			}
-			return false;
-		}
+      return existsInWorldDimensions.Any(x => x.modname == modname && x.areaname == areaname);
+    }
 
 		// registers a dimension. Not necessarily added to sections, since that happens during world gen
 		internal bool RegisterDimension(string modname, string areaname, Action<Rectangle> generatorCode)
@@ -260,7 +257,6 @@ namespace AlternateDimensions
 
 		internal void SetSection(string modname, string areaname)
 		{
-
 		}
 
 		private void SetSection(Dimension section)
@@ -279,7 +275,6 @@ namespace AlternateDimensions
 			// TODO. Set surface and rock layer?
 			if (section.area.Left == 0)
 			{
-
 			}
 
 			DebugText($"SetSection: {section}");
@@ -287,6 +282,7 @@ namespace AlternateDimensions
 		// END HOOKS
 
 		static bool debug = false;
+    internal ILog logging = LogManager.GetLogger("AlternateDimensions");
 		// DEBUG SECTION
 		internal static void DebugText(string message)
 		{
@@ -300,13 +296,14 @@ namespace AlternateDimensions
 				{
 					if (Main.gameMenu)
 					{
+            // log4net.Core.Level level = log4net.Core.Level.Debug;
+						// Logger.Log(level, Main.myPlayer + ": " + message, System.Exception.Source;
 						ErrorLogger.Log(Main.myPlayer + ": " + message);
 					}
 					else
 					{
 						Main.NewText(message);
 					}
-
 				}
 			}
 		}
@@ -388,26 +385,26 @@ namespace AlternateDimensions
 				Rectangle area = new Rectangle(Main.maxTilesX, 0, 500, Main.maxTilesY);
 				//ErrorLogger.Log("1" + Main.tile.GetHashCode() + " " + Main.tile.GetLength(0));
 				Main.tile = ResizeArray<Tile>(Main.tile, Main.maxTilesX + 500 + 1, Main.maxTilesY + 1); // add one because originally it wa that
-																										//ErrorLogger.Log("2" + Main.tile.GetHashCode() + " " + Main.tile.GetLength(0));
+                                                                                                //ErrorLogger.Log("2" + Main.tile.GetHashCode() + " " + Main.tile.GetLength(0));
 
-				Action<int, int> newTile = (x, y) => Main.tile[x, y] = new Tile();
-				Action<int, int> activate = (x, y) => { Main.tile[x, y].active(true); };
-				Action<int, int> defaultFrame = (x, y) => { Main.tile[x, y].frameX = -1; Main.tile[x, y].frameY = -1; };
+        void newTile(int x, int y) => Main.tile[x, y] = new Tile();
+        void activate(int x, int y) { Main.tile[x, y].active(true); }
+        void defaultFrame(int x, int y) { Main.tile[x, y].frameX = -1; Main.tile[x, y].frameY = -1; }
 
-				//Action<int, int> log = (x, y) =>
-				//{
-				//	if (x % 5 == 0 && y % 5 == 0)
-				//	{
-				//		Main.tile[x, y].active(true);
-				//		Main.tile[x, y].frameX = -1;
-				//		Main.tile[x, y].frameY = -1;
-				//		Main.tile[x, y].type = TileID.Mud;
-				//	//	ErrorLogger.Log(x + " " + y + Main.tile[x, y].active()+ " " + Main.tile.GetHashCode() + " " + Main.tile.GetLength(0));
-				//	}
-				//};
+        //Action<int, int> log = (x, y) =>
+        //{
+        //	if (x % 5 == 0 && y % 5 == 0)
+        //	{
+        //		Main.tile[x, y].active(true);
+        //		Main.tile[x, y].frameX = -1;
+        //		Main.tile[x, y].frameY = -1;
+        //		Main.tile[x, y].type = TileID.Mud;
+        //	//	ErrorLogger.Log(x + " " + y + Main.tile[x, y].active()+ " " + Main.tile.GetHashCode() + " " + Main.tile.GetLength(0));
+        //	}
+        //};
 
-				DoXInRange(area.Left, area.Top, area.Right, area.Bottom, newTile /*activate*/ /*defaultFrame*/);
-				DoXAroundBorder(area.Left, area.Top, area.Right, area.Bottom, activate, defaultFrame, (x, y) => { Main.tile[x, y].type = TileID.Stone; });
+        DoXInRange(area.Left, area.Top, area.Right, area.Bottom, (Action<int, int>)newTile /*activate*/ /*defaultFrame*/);
+				DoXAroundBorder(area.Left, area.Top, area.Right, area.Bottom, activate, defaultFrame, (x, y) => Main.tile[x, y].type = TileID.Stone);
 				try
 				{
 					Main.maxTilesX += 500;
@@ -415,8 +412,6 @@ namespace AlternateDimensions
 					dimension.generateCode(area);
 					existsInWorldDimensions.Add(new Dimension(existsInWorldDimensions.Count, dimension.modname, dimension.areaname, area));
 					DebugText($"GenerateCode Success for Mod:{dimension.modname} and Area:{dimension.areaname}");
-
-
 					// needed?
 					Main.bottomWorld = (float)(Main.maxTilesY * 16);
 					Main.rightWorld = (float)(Main.maxTilesX * 16);
@@ -428,7 +423,7 @@ namespace AlternateDimensions
 					DebugText($"GenerateCode failed for Mod:{dimension.modname} Area:{dimension.areaname}");
 				}
 			}
-			DebugText($"PostWorldGenComplete");
+			DebugText("PostWorldGenComplete");
 		}
 
 		private void DoXInRange(int x1, int y1, int x2, int y2, params Action<int, int>[] actions)
@@ -660,7 +655,6 @@ namespace AlternateDimensions
 			int d = newArray.GetLength(1);
 			DebugText($"Resize Array: Ox {a} 0y {b} Nx {c} Ny {d}");
 
-
 			for (int i = 0; i < minX; ++i)
 				Array.Copy(original, i * original.GetLength(1), newArray, i * newArray.GetLength(1), minY - 1);
 
@@ -727,9 +721,6 @@ namespace AlternateDimensions
 	}
 }
 
-
-
-
 //// TODO, check if initializing at world gen?
 //DebugText("1 WorldRight " + Main.rightWorld);
 //DebugText("1 maxTilesX " + Main.maxTilesX);
@@ -739,8 +730,6 @@ namespace AlternateDimensions
 
 //DebugText("2 WorldRight " + Main.rightWorld);
 //DebugText("2 maxTilesX " + Main.maxTilesX);
-
-
 
 // Wait, does/should this happen on client?
 // Most should happen before anything is even loaded.
